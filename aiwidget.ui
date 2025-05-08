@@ -22,7 +22,7 @@
      <item>
       <widget class="QScrollArea" name="scrollArea">
        <property name="widgetResizable">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <widget class="QWidget" name="messageContainer">
         <property name="geometry">
@@ -34,21 +34,24 @@
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>7</number>
+         </property>
+         <property name="leftMargin">
+          <number>11</number>
+         </property>
+         <property name="topMargin">
+          <number>11</number>
+         </property>
+         <property name="rightMargin">
+          <number>11</number>
+         </property>
+         <property name="bottomMargin">
+          <number>11</number>
+         </property>
          <item>
           <layout class="QVBoxLayout" name="messageLayout">
            <property name="spacing">
-            <number>20</number>
-           </property>
-           <property name="leftMargin">
-            <number>10</number>
-           </property>
-           <property name="topMargin">
-            <number>10</number>
-           </property>
-           <property name="rightMargin">
-            <number>10</number>
-           </property>
-           <property name="bottomMargin">
             <number>10</number>
            </property>
           </layout>
@@ -78,7 +81,7 @@
            <number>10</number>
           </property>
           <item>
-           <widget class="QTextEdit" name="inputEdit"/>
+           <widget class="QPlainTextEdit" name="inputEdit"/>
           </item>
           <item>
            <widget class="QPushButton" name="sendButton">

@@ -6,6 +6,9 @@
 #include <QLabel>
 #include <QTimer>
 #include <QPushButton>
+#include <QScrollBar>
+#include <QWheelEvent>
+#include <QLayout>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,6 +23,9 @@ class AIWidget : public QWidget
 public:
     AIWidget(QWidget *parent = nullptr);
     ~AIWidget();
+
+protected:
+    //void wheelEvent(QWheelEvent *event) override;
 
 private slots:
     void sendMessage();
