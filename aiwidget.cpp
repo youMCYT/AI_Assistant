@@ -7,6 +7,8 @@ AIWidget::AIWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
+    DeepseekApiClient *cl = new DeepseekApiClient(this);
+
     ui->scrollArea->setWidgetResizable(false);
     ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -15,6 +17,9 @@ AIWidget::AIWidget(QWidget *parent)
     ui->messageContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     connect(ui->sendButton, &QPushButton::clicked, this, &AIWidget::sendMessage);
+
+    connect(cl, &DeepseekApiClient::sendReply, this, &AIWidget::getReply);
+    connect(this, &AIWidget::sendPrompt, cl, &DeepseekApiClient::getPrompt);
 }
 
 AIWidget::~AIWidget()
@@ -62,12 +67,16 @@ void AIWidget::sendMessage()
     {
         addMessage(msg);
         ui->inputEdit->clear();
+        emit sendPrompt(msg);
     }
 }
 
 void AIWidget::getReply(const QString &reply)
 {
-
+    if (!reply.isEmpty())
+    {
+        addMessage(reply, false);
+    }
 }
 
 void AIWidget::addMessage(const QString &message, bool is_self)

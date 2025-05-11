@@ -6,8 +6,11 @@
 #include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QUrlQuery>
 #include <QString>
+#include <QFile>
+#include <QDir>
 
 class DeepseekApiClient : public QObject
 {
@@ -20,11 +23,18 @@ signals:
     void sendReply(const QString &reply);
 
 private:
-    void handleRequest(QNetworkReply *reply);
+    QNetworkAccessManager *manager;
+    const QString API_KEY;
+    const QString API_URL = "https://api.deepseek.com/chat/completions";
+
     void sendRequest(const QString &message);
+    //void getAPIKEY(const QString &path);
+
+public slots:
+    void getPrompt(const QString &prompt);
 
 private slots:
-    void getPrompt(const QString &prompt);
+    void handleRequest(QNetworkReply *reply);
 };
 
 #endif // DSCLIENT_H

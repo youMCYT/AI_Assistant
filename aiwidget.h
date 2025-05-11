@@ -12,6 +12,8 @@
 #include <QLayout>
 #include <QTextDocument>
 
+#include "dsclient.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class AIWidget;
