@@ -12,27 +12,30 @@
 #include <QFile>
 #include <QDir>
 
-class DeepseekApiClient : public QObject
+class DeepSeekApiClient : public QObject
 {
     Q_OBJECT
 
 public:
-    DeepseekApiClient(QObject *parent = nullptr);
+    DeepSeekApiClient(QObject *parent = nullptr);
 
 signals:
     void sendReply(const QString &reply, QJsonArray &dialogue);
+    void findAPIKEY(bool is_APIKEY_empty, const QString &path);
 
 private:
     QNetworkAccessManager *manager;
+    QString API_KEY_path;
 
-    const QString API_KEY = "";
+    QString API_KEY;
     const QString API_URL = "https://api.deepseek.com/chat/completions";
 
     void sendRequest(const QString &message, QJsonArray &dialogue);
-    //void getAPIKEY(const QString &path);
+    void getAPIKEY(const QString &path);
 
 public slots:
     void getPrompt(const QString &prompt, QJsonArray &dialogue);
+    void sendAPIKEY();
 
 private slots:
     void handleRequest(QNetworkReply *reply, QJsonArray &dialogue);

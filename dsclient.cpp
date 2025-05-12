@@ -1,13 +1,14 @@
 #include "dsclient.h"
 
-DeepseekApiClient::DeepseekApiClient(QObject *parent) : QObject(parent)
+DeepSeekApiClient::DeepSeekApiClient(QObject *parent) : QObject(parent)
 {
     manager = new QNetworkAccessManager(this);
+    API_KEY_path = QDir::cleanPath(QDir::currentPath() + QDir::separator() + QString("setting.json"));
 
-    //getAPIKEY("setting.json");
+    getAPIKEY(API_KEY_path);
 }
 
-void DeepseekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
+void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
 {
     QNetworkRequest request;
     request.setUrl(QUrl(API_URL));
@@ -35,29 +36,45 @@ void DeepseekApiClient::sendRequest(const QString &message, QJsonArray &dialogue
     });
 }
 
-/*
-void DeepseekApiClient::getAPIKEY(const QString &path)
+void DeepSeekApiClient::getAPIKEY(const QString &path)
 {
     QFile file(path);
-    bool bOpen = file.open(QIODevice::ReadOnly);
-    if (bOpen == false)
+
+    if (!QFile::exists(path))
     {
-        return;
+        file.open(QIODevice::WriteOnly);
+        file.write(QJsonDocument(QJsonObject{{"API_KEY", "将引号内的文字替换为你的DeepSeek API KEY"}}).toJson());
+        file.flush();
+        file.close();
     }
-    QByteArray data = file.readAll();
+
+    file.open(QIODevice::ReadOnly);
+
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
     file.close();
 
-    QJsonDocument doc = QJsonDocument::fromJson(data);
+    QJsonObject json = doc.object();
 
-    if (doc["API_KEY"].isObject())
+    if (json["API_KEY"].toString() != "将引号内的文字替换为你的DeepSeek API KEY")
     {
-        API_KEY = doc["API_KEY"].toString();
-        qDebug() << "API_KEY:" << API_KEY;
+        API_KEY = json["API_KEY"].toString();
     }
 }
-*/
 
-void DeepseekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue)
+void DeepSeekApiClient::getPrompt(const QString &prompt, QJsonArray &dialogue)
+{
+    if (!prompt.isEmpty())
+    {
+        sendRequest(prompt, dialogue);
+    }
+}
+
+void DeepSeekApiClient::sendAPIKEY()
+{
+    emit findAPIKEY(API_KEY.isEmpty(), API_KEY_path);
+}
+
+void DeepSeekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue)
 {
     if (reply)
     {
@@ -85,13 +102,5 @@ void DeepseekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue
             emit sendReply("无效的响应格式", dialogue);
         }
 
-    }
-}
-
-void DeepseekApiClient::getPrompt(const QString &prompt, QJsonArray &dialogue)
-{
-    if (!prompt.isEmpty())
-    {
-        sendRequest(prompt, dialogue);
     }
 }

@@ -1,13 +1,12 @@
 #include "aiwidget.h"
 #include "ui_aiwidget.h"
 
-AIWidget::AIWidget(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::AIWidget)
+AIWidget::AIWidget(QWidget *parent): QWidget(parent), ui(new Ui::AIWidget)
 {
     ui->setupUi(this);
-    cl = new DeepseekApiClient(this);
-    dialogue.append(QJsonObject{{"role", "system"}, {"content", "You are a helpful assistant."}});
+    cl = new DeepSeekApiClient(this);
+    history_path = QDir::cleanPath(QDir::currentPath() + QDir::separator() + QString("history.json"));
+    initChatHistory(history_path);
 
     ui->scrollArea->setWidgetResizable(false);
     ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -18,8 +17,12 @@ AIWidget::AIWidget(QWidget *parent)
 
     connect(ui->sendButton, &QPushButton::clicked, this, &AIWidget::sendMessage);
 
-    connect(cl, &DeepseekApiClient::sendReply, this, &AIWidget::getReply);
-    connect(this, &AIWidget::sendPrompt, cl, &DeepseekApiClient::getPrompt);
+    connect(cl, &DeepSeekApiClient::sendReply, this, &AIWidget::getReply);
+    connect(this, &AIWidget::sendPrompt, cl, &DeepSeekApiClient::getPrompt);
+    connect(cl, &DeepSeekApiClient::findAPIKEY, this, &AIWidget::initWidget);
+    connect(this, &AIWidget::requestAPIKEY, cl, &DeepSeekApiClient::sendAPIKEY);
+
+    startInitWidget();
 }
 
 AIWidget::~AIWidget()
@@ -59,6 +62,11 @@ bool AIWidget::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
+void AIWidget::handleAppExit()
+{
+    saveChatHistory(history_path);
+}
+
 void AIWidget::sendMessage()
 {
     QString msg = ui->inputEdit->toPlainText();
@@ -67,7 +75,7 @@ void AIWidget::sendMessage()
     {
         addMessage(msg);
         ui->inputEdit->clear();
-        emit sendPrompt(msg, dialogue);
+        emit sendPrompt(msg, chat_history);
     }
 }
 
@@ -78,6 +86,18 @@ void AIWidget::getReply(const QString &reply, QJsonArray &dialogue)
         addMessage(reply, false);
 
         dialogue.append(QJsonObject{{"role", "assistant"}, {"content", reply}});
+    }
+}
+
+void AIWidget::initWidget(bool is_APIKEY_empty, const QString &path)
+{
+    if (is_APIKEY_empty)
+    {
+        addMessage(QString("请使用支持的编辑器打开setting.json文件，依据文件内的指引添加你的DeepSeek API KEY，并在完成后重启程序。\n文件路径：") + path, false);
+    }
+    else
+    {
+        initChatWidget(chat_history);
     }
 }
 
@@ -123,4 +143,55 @@ void AIWidget::setQLabelHeight(QLabel *label)
     doc.setPlainText(label->text());
     doc.setTextWidth(label->width());
     label->setFixedHeight(doc.size().height() + 2 * label->margin());
+}
+
+void AIWidget::initChatHistory(const QString &path)
+{
+    QFile file(path);
+
+    if (!QFile::exists(path))
+    {
+        file.open(QIODevice::WriteOnly);
+        file.write(QJsonDocument(QJsonArray{QJsonObject{{"role", "system"}, {"content", "You are a helpful assistant."}}}).toJson());
+        file.flush();
+        file.close();
+    }
+
+    file.open(QIODevice::ReadOnly);
+
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+
+    chat_history = doc.array();
+}
+
+void AIWidget::saveChatHistory(const QString &path)
+{
+    QFile file(path);
+
+    file.open(QIODevice::WriteOnly);
+    file.write(QJsonDocument(chat_history).toJson());
+    file.flush();
+    file.close();
+}
+
+void AIWidget::initChatWidget(const QJsonArray &dialogue)
+{
+    for (int i = 0; i < dialogue.count(); i++)
+    {
+        qDebug() << "role:" << dialogue.at(i).toObject()["role"].toString() << "/ncontent:" << dialogue.at(i).toObject()["content"].toString();
+        if (dialogue.at(i).toObject()["role"].toString() == "assistant")
+        {
+            addMessage(dialogue.at(i).toObject()["content"].toString(), false);
+        }
+        else if (dialogue.at(i).toObject()["role"].toString() == "user")
+        {
+            addMessage(dialogue.at(i).toObject()["content"].toString());
+        }
+    }
+}
+
+void AIWidget::startInitWidget()
+{
+    emit requestAPIKEY();
 }

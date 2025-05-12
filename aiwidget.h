@@ -30,23 +30,33 @@ public:
 
 signals:
     void sendPrompt(const QString &prompt, QJsonArray &dialogue);
+    void requestAPIKEY();
 
 protected:
     //void wheelEvent(QWheelEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
+public slots:
+    void handleAppExit();
+
 private slots:
     void sendMessage();
     void getReply(const QString &reply, QJsonArray &dialogue);
+    void initWidget(bool is_APIKEY_empty, const QString &path);
 
 private:
     Ui::AIWidget *ui;
-    DeepseekApiClient *cl;
-    QJsonArray dialogue;
+    DeepSeekApiClient *cl;
+    QJsonArray chat_history;
+    QString history_path;
 
     void addMessage(const QString &message, bool is_self = true);
     int calculateHeight();
     void setQLabelHeight(QLabel *label);
+    void initChatHistory(const QString &path);
+    void saveChatHistory(const QString &path);
+    void initChatWidget(const QJsonArray &dialogue);
+    void startInitWidget();
 };
 
 #endif // AIWIDGET_H
