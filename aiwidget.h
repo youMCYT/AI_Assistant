@@ -29,7 +29,7 @@ public:
     ~AIWidget();
 
 signals:
-    void sendPrompt(const QString &prompt, QJsonArray &dialogue);
+    void sendDialogue(const QString &message, QJsonArray &dialogue);
     void requestAPIKEY();
 
 protected:
@@ -41,8 +41,9 @@ public slots:
 
 private slots:
     void sendMessage();
-    void getReply(const QString &reply, QJsonArray &dialogue);
+    void getReply(const QString &reply, bool is_error);
     void initWidget(bool is_APIKEY_empty, const QString &path);
+    void startInitWidget();
 
 private:
     Ui::AIWidget *ui;
@@ -56,7 +57,6 @@ private:
     void initChatHistory(const QString &path);
     void saveChatHistory(const QString &path);
     void initChatWidget(const QJsonArray &dialogue);
-    void startInitWidget();
 };
 
 #endif // AIWIDGET_H

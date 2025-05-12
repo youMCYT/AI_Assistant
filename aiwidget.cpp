@@ -12,17 +12,18 @@ AIWidget::AIWidget(QWidget *parent): QWidget(parent), ui(new Ui::AIWidget)
     ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     ui->scrollArea->viewport()->installEventFilter(this);
+    qDebug() << ui->scrollArea->viewport()->width();
 
     ui->messageContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     connect(ui->sendButton, &QPushButton::clicked, this, &AIWidget::sendMessage);
 
     connect(cl, &DeepSeekApiClient::sendReply, this, &AIWidget::getReply);
-    connect(this, &AIWidget::sendPrompt, cl, &DeepSeekApiClient::getPrompt);
+    connect(this, &AIWidget::sendDialogue, cl, &DeepSeekApiClient::getDialogue);
     connect(cl, &DeepSeekApiClient::findAPIKEY, this, &AIWidget::initWidget);
     connect(this, &AIWidget::requestAPIKEY, cl, &DeepSeekApiClient::sendAPIKEY);
 
-    startInitWidget();
+    QTimer::singleShot(0, this, &AIWidget::startInitWidget);
 }
 
 AIWidget::~AIWidget()
@@ -75,17 +76,20 @@ void AIWidget::sendMessage()
     {
         addMessage(msg);
         ui->inputEdit->clear();
-        emit sendPrompt(msg, chat_history);
+        emit sendDialogue(msg, chat_history);
     }
 }
 
-void AIWidget::getReply(const QString &reply, QJsonArray &dialogue)
+void AIWidget::getReply(const QString &reply, bool is_error)
 {
     if (!reply.isEmpty())
     {
-        addMessage(reply, false);
+        if (is_error)
+        {
+            chat_history.removeLast();
+        }
 
-        dialogue.append(QJsonObject{{"role", "assistant"}, {"content", reply}});
+        addMessage(reply, false);
     }
 }
 
@@ -93,7 +97,11 @@ void AIWidget::initWidget(bool is_APIKEY_empty, const QString &path)
 {
     if (is_APIKEY_empty)
     {
+        ui->messageContainer->setFixedWidth(ui->scrollArea->viewport()->width());
+
         addMessage(QString("请使用支持的编辑器打开setting.json文件，依据文件内的指引添加你的DeepSeek API KEY，并在完成后重启程序。\n文件路径：") + path, false);
+
+        ui->messageContainer->setFixedHeight(calculateHeight());
     }
     else
     {
@@ -101,17 +109,27 @@ void AIWidget::initWidget(bool is_APIKEY_empty, const QString &path)
     }
 }
 
+void AIWidget::startInitWidget()
+{
+    emit requestAPIKEY();
+}
+
 void AIWidget::addMessage(const QString &message, bool is_self)
 {
-    QLabel *msg_label = new QLabel(message);
+    QLabel *msg_label = new QLabel(message, this);
     msg_label->setWordWrap(true);
     msg_label->setAlignment(is_self ? (Qt::AlignRight | Qt::AlignTop) : (Qt::AlignLeft | Qt::AlignTop));
     msg_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     setQLabelHeight(msg_label);
 
     ui->messageLayout->addWidget(msg_label);
+    qDebug() << msg_label->width();
 
-    ui->messageContainer->setFixedHeight(calculateHeight());
+    QWidget *msgContainer = ui->messageContainer;
+
+    QTimer::singleShot(0, this, [this, msgContainer] () {
+        msgContainer->setFixedHeight(calculateHeight());
+    });
 }
 
 int AIWidget::calculateHeight()
@@ -177,6 +195,9 @@ void AIWidget::saveChatHistory(const QString &path)
 
 void AIWidget::initChatWidget(const QJsonArray &dialogue)
 {
+    ui->messageContainer->setFixedWidth(ui->scrollArea->viewport()->width());
+    qDebug() << "width:" << ui->messageContainer->width();
+
     for (int i = 0; i < dialogue.count(); i++)
     {
         qDebug() << "role:" << dialogue.at(i).toObject()["role"].toString() << "/ncontent:" << dialogue.at(i).toObject()["content"].toString();
@@ -189,9 +210,6 @@ void AIWidget::initChatWidget(const QJsonArray &dialogue)
             addMessage(dialogue.at(i).toObject()["content"].toString());
         }
     }
-}
 
-void AIWidget::startInitWidget()
-{
-    emit requestAPIKEY();
+    ui->messageContainer->setFixedHeight(calculateHeight());
 }

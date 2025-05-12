@@ -6,6 +6,9 @@ DeepSeekApiClient::DeepSeekApiClient(QObject *parent) : QObject(parent)
     API_KEY_path = QDir::cleanPath(QDir::currentPath() + QDir::separator() + QString("setting.json"));
 
     getAPIKEY(API_KEY_path);
+
+    connect(this, &DeepSeekApiClient::runTasks, this, &DeepSeekApiClient::sendMultiRequest);
+    connect(this, &DeepSeekApiClient::taskFinished, this, &DeepSeekApiClient::sendMultiRequest);
 }
 
 void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
@@ -33,6 +36,7 @@ void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue
     connect(reply, &QNetworkReply::finished, this, [this, reply, &dialogue] () {
         handleRequest(reply, dialogue);
         reply->deleteLater();
+        emit taskFinished(dialogue);
     });
 }
 
@@ -61,11 +65,12 @@ void DeepSeekApiClient::getAPIKEY(const QString &path)
     }
 }
 
-void DeepSeekApiClient::getPrompt(const QString &prompt, QJsonArray &dialogue)
+void DeepSeekApiClient::getDialogue(const QString &message, QJsonArray &dialogue)
 {
-    if (!prompt.isEmpty())
+    messages.enqueue(message);
+    if (!is_task_running)
     {
-        sendRequest(prompt, dialogue);
+        emit runTasks(dialogue);
     }
 }
 
@@ -82,7 +87,7 @@ void DeepSeekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue
         if (reply->error() != QNetworkReply::NoError)
         {
             qDebug() << reply->errorString();
-            emit sendReply(reply->errorString(), dialogue);
+            emit sendReply(reply->errorString(), true);
             return;
         }
 
@@ -94,13 +99,32 @@ void DeepSeekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue
         {
             QString content = doc["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
             qDebug() << content;
-            emit sendReply(content, dialogue);
+            dialogue.append(QJsonObject{{"role", "assistant"}, {"content", content}});
+            emit sendReply(content, false);
         }
         else
         {
             qDebug() << "error";
-            emit sendReply("无效的响应格式", dialogue);
+            emit sendReply("无效的响应格式", true);
         }
+    }
+}
 
+void DeepSeekApiClient::sendMultiRequest(QJsonArray &dialogue)
+{
+    if (messages.isEmpty())
+    {
+        is_task_running = false;
+    }
+    else
+    {
+        is_task_running = true;
+        const QString message = messages.head();
+        qDebug() << dialogue << "\n" << message;
+        messages.dequeue();
+
+        QTimer::singleShot(0, this, [this, message, &dialogue] () {
+            sendRequest(message, dialogue);
+        });
     }
 }
