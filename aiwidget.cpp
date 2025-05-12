@@ -6,8 +6,8 @@ AIWidget::AIWidget(QWidget *parent)
     , ui(new Ui::AIWidget)
 {
     ui->setupUi(this);
-
-    DeepseekApiClient *cl = new DeepseekApiClient(this);
+    cl = new DeepseekApiClient(this);
+    dialogue.append(QJsonObject{{"role", "system"}, {"content", "You are a helpful assistant."}});
 
     ui->scrollArea->setWidgetResizable(false);
     ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -67,15 +67,17 @@ void AIWidget::sendMessage()
     {
         addMessage(msg);
         ui->inputEdit->clear();
-        emit sendPrompt(msg);
+        emit sendPrompt(msg, dialogue);
     }
 }
 
-void AIWidget::getReply(const QString &reply)
+void AIWidget::getReply(const QString &reply, QJsonArray &dialogue)
 {
     if (!reply.isEmpty())
     {
         addMessage(reply, false);
+
+        dialogue.append(QJsonObject{{"role", "assistant"}, {"content", reply}});
     }
 }
 

@@ -4,12 +4,10 @@ DeepseekApiClient::DeepseekApiClient(QObject *parent) : QObject(parent)
 {
     manager = new QNetworkAccessManager(this);
 
-    //QString path = QDir::cleanPath(QDir::currentPath() + QDir::separator() + "setting.json");
-    //qDebug() << "path:" << path;
-    //getAPIKEY(path);
+    //getAPIKEY("setting.json");
 }
 
-void DeepseekApiClient::sendRequest(const QString &message)
+void DeepseekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
 {
     QNetworkRequest request;
     request.setUrl(QUrl(API_URL));
@@ -19,17 +17,22 @@ void DeepseekApiClient::sendRequest(const QString &message)
     qDebug() << "QSslSocket:" << QSslSocket::sslLibraryBuildVersionString();
     qDebug() << "OpenSSL:" << QSslSocket::supportsSsl();
 
+    dialogue.append(QJsonObject{{"role", "user"}, {"content", message}});
+
     QJsonObject json
     {
         {"model", "deepseek-chat"},
-        {"messages", QJsonArray{QJsonObject{{"role", "system"}, {"content", "You are a helpful assistant."}}, QJsonObject{{"role", "user"}, {"content", message}}}}
+        {"messages", dialogue}
     };
 
     qDebug() << "requesting...";
     qDebug() << "Request JSON:" << QJsonDocument(json).toJson();
     QNetworkReply *reply = manager->post(request, QJsonDocument(json).toJson());
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply] () {handleRequest(reply);});
+    connect(reply, &QNetworkReply::finished, this, [this, reply, &dialogue] () {
+        handleRequest(reply, dialogue);
+        reply->deleteLater();
+    });
 }
 
 /*
@@ -54,17 +57,15 @@ void DeepseekApiClient::getAPIKEY(const QString &path)
 }
 */
 
-void DeepseekApiClient::handleRequest(QNetworkReply *reply)
+void DeepseekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue)
 {
-    reply->deleteLater();
-
     if (reply)
     {
         qDebug() << "successfully get reply";
         if (reply->error() != QNetworkReply::NoError)
         {
             qDebug() << reply->errorString();
-            emit sendReply(reply->errorString());
+            emit sendReply(reply->errorString(), dialogue);
             return;
         }
 
@@ -76,21 +77,21 @@ void DeepseekApiClient::handleRequest(QNetworkReply *reply)
         {
             QString content = doc["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
             qDebug() << content;
-            emit sendReply(content);
+            emit sendReply(content, dialogue);
         }
         else
         {
             qDebug() << "error";
-            emit sendReply("无效的响应格式");
+            emit sendReply("无效的响应格式", dialogue);
         }
 
     }
 }
 
-void DeepseekApiClient::getPrompt(const QString &prompt)
+void DeepseekApiClient::getPrompt(const QString &prompt, QJsonArray &dialogue)
 {
     if (!prompt.isEmpty())
     {
-        sendRequest(prompt);
+        sendRequest(prompt, dialogue);
     }
 }

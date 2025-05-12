@@ -29,7 +29,7 @@ public:
     ~AIWidget();
 
 signals:
-    void sendPrompt(const QString &prompt);
+    void sendPrompt(const QString &prompt, QJsonArray &dialogue);
 
 protected:
     //void wheelEvent(QWheelEvent *event) override;
@@ -37,10 +37,13 @@ protected:
 
 private slots:
     void sendMessage();
-    void getReply(const QString &reply);
+    void getReply(const QString &reply, QJsonArray &dialogue);
 
 private:
     Ui::AIWidget *ui;
+    DeepseekApiClient *cl;
+    QJsonArray dialogue;
+
     void addMessage(const QString &message, bool is_self = true);
     int calculateHeight();
     void setQLabelHeight(QLabel *label);
