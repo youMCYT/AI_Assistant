@@ -20,6 +20,7 @@ class DeepSeekApiClient : public QObject
 
 public:
     DeepSeekApiClient(QObject *parent = nullptr);
+    bool tasksProcessGetter();
 
 signals:
     void sendReply(const QString &reply, bool is_error);

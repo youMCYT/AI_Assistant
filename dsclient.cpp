@@ -11,6 +11,11 @@ DeepSeekApiClient::DeepSeekApiClient(QObject *parent) : QObject(parent)
     connect(this, &DeepSeekApiClient::taskFinished, this, &DeepSeekApiClient::sendMultiRequest);
 }
 
+bool DeepSeekApiClient::tasksProcessGetter()
+{
+    return is_task_running;
+}
+
 void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
 {
     QNetworkRequest request;

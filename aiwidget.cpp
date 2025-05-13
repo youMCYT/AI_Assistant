@@ -63,9 +63,18 @@ bool AIWidget::eventFilter(QObject *watched, QEvent *event)
     return QWidget::eventFilter(watched, event);
 }
 
-void AIWidget::handleAppExit()
+void AIWidget::closeEvent(QCloseEvent *event)
 {
-    saveChatHistory(history_path);
+    if (cl->tasksProcessGetter())
+    {
+        QMessageBox::information(this, "提示", "还有尚未执行完毕的请求！\n请等待所有请求执行完毕...");
+        event->ignore();
+    }
+    else
+    {
+        saveChatHistory(history_path);
+        event->accept();
+    }
 }
 
 void AIWidget::sendMessage()

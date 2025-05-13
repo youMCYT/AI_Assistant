@@ -11,6 +11,7 @@
 #include <QWheelEvent>
 #include <QLayout>
 #include <QTextDocument>
+#include <QMessageBox>
 
 #include "dsclient.h"
 
@@ -35,9 +36,7 @@ signals:
 protected:
     //void wheelEvent(QWheelEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
-
-public slots:
-    void handleAppExit();
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void sendMessage();
