@@ -12,6 +12,7 @@
 #include <QLayout>
 #include <QTextDocument>
 #include <QMessageBox>
+#include <QTextBrowser>
 
 #include "dsclient.h"
 
@@ -50,9 +51,11 @@ private:
     QJsonArray chat_history;
     QString history_path;
 
-    void addMessage(const QString &message, bool is_self = true);
+    void addMessage(const QString &message);
+    void addReply(const QString &message);
     int calculateHeight();
     void setQLabelHeight(QLabel *label);
+    void setQTextBrowserHeight(QTextBrowser *browser);
     void initChatHistory(const QString &path);
     void saveChatHistory(const QString &path);
     void initChatWidget(const QJsonArray &dialogue);

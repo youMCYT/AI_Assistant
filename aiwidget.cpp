@@ -98,7 +98,7 @@ void AIWidget::getReply(const QString &reply, bool is_error)
             chat_history.removeLast();
         }
 
-        addMessage(reply, false);
+        addReply(reply);
     }
 }
 
@@ -108,7 +108,7 @@ void AIWidget::initWidget(bool is_APIKEY_empty, const QString &path)
     {
         ui->messageContainer->setFixedWidth(ui->scrollArea->viewport()->width());
 
-        addMessage(QString("请使用支持的编辑器打开setting.json文件，依据文件内的指引添加你的DeepSeek API KEY，并在完成后重启程序。\n文件路径：") + path, false);
+        addReply(QString("请使用支持的编辑器打开setting.json文件，依据文件内的指引添加你的DeepSeek API KEY，并在完成后重启程序。\n文件路径：") + path);
 
         ui->messageContainer->setFixedHeight(calculateHeight());
     }
@@ -123,16 +123,55 @@ void AIWidget::startInitWidget()
     emit requestAPIKEY();
 }
 
-void AIWidget::addMessage(const QString &message, bool is_self)
+void AIWidget::addMessage(const QString &message)
 {
     QLabel *msg_label = new QLabel(message, this);
+
+    QFont label_font = msg_label->font();
+    label_font.setPointSize(12);
+    msg_label->setFont(label_font);
+
     msg_label->setWordWrap(true);
-    msg_label->setAlignment(is_self ? (Qt::AlignRight | Qt::AlignTop) : (Qt::AlignLeft | Qt::AlignTop));
+    msg_label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    msg_label->setAlignment(Qt::AlignRight | Qt::AlignTop);
+
     msg_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
     setQLabelHeight(msg_label);
 
     ui->messageLayout->addWidget(msg_label);
     qDebug() << msg_label->width();
+
+    QWidget *msgContainer = ui->messageContainer;
+
+    QTimer::singleShot(0, this, [this, msgContainer] () {
+        msgContainer->setFixedHeight(calculateHeight());
+    });
+}
+
+void AIWidget::addReply(const QString &message)
+{
+    QTextBrowser *msg_browser = new QTextBrowser(this);
+
+    QFont browser_font = msg_browser->font();
+    browser_font.setPointSize(12);
+    msg_browser->setFont(browser_font);
+
+    msg_browser->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    msg_browser->setLineWrapMode(QTextEdit::NoWrap);
+    msg_browser->setWordWrapMode(QTextOption::NoWrap);
+
+    msg_browser->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::LinksAccessibleByMouse);
+
+    msg_browser->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    msg_browser->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    msg_browser->setMarkdown(message);
+    setQTextBrowserHeight(msg_browser);
+
+    ui->messageLayout->addWidget(msg_browser);
+    qDebug() << msg_browser->width();
 
     QWidget *msgContainer = ui->messageContainer;
 
@@ -150,7 +189,11 @@ int AIWidget::calculateHeight()
         QWidget *widget_object = ui->messageLayout->itemAt(i)->widget();
         if (widget_object)
         {
-            if (QLabel *label = qobject_cast<QLabel*>(widget_object))
+            if (QTextBrowser *browser = qobject_cast<QTextBrowser*>(widget_object))
+            {
+                setQTextBrowserHeight(browser);
+            }
+            else if (QLabel *label = qobject_cast<QLabel*>(widget_object))
             {
                 setQLabelHeight(label);
             }
@@ -170,6 +213,13 @@ void AIWidget::setQLabelHeight(QLabel *label)
     doc.setPlainText(label->text());
     doc.setTextWidth(label->width());
     label->setFixedHeight(doc.size().height() + 2 * label->margin());
+}
+
+void AIWidget::setQTextBrowserHeight(QTextBrowser *browser)
+{
+    browser->document()->adjustSize();
+
+    browser->setFixedHeight(browser->document()->size().height() + browser->contentsMargins().top() + browser->contentsMargins().bottom() + (browser->horizontalScrollBar()->isVisible() ? browser->horizontalScrollBar()->height() : 0));
 }
 
 void AIWidget::initChatHistory(const QString &path)
@@ -212,7 +262,7 @@ void AIWidget::initChatWidget(const QJsonArray &dialogue)
         qDebug() << "role:" << dialogue.at(i).toObject()["role"].toString() << "/ncontent:" << dialogue.at(i).toObject()["content"].toString();
         if (dialogue.at(i).toObject()["role"].toString() == "assistant")
         {
-            addMessage(dialogue.at(i).toObject()["content"].toString(), false);
+            addReply(dialogue.at(i).toObject()["content"].toString());
         }
         else if (dialogue.at(i).toObject()["role"].toString() == "user")
         {

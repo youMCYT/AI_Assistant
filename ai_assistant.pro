@@ -18,7 +18,9 @@ HEADERS += \
     dsclient.h
 
 FORMS += \
-    aiwidget.ui
+    aiwidget.ui \
+    chatdialog.ui \
+    settingdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

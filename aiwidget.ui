@@ -15,10 +15,54 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
-    <layout class="QVBoxLayout" name="mainLayout" stretch="7,1">
+    <layout class="QVBoxLayout" name="mainLayout" stretch="2,20,5">
      <property name="spacing">
-      <number>20</number>
+      <number>0</number>
      </property>
+     <item>
+      <widget class="QWidget" name="menuArea" native="true">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <layout class="QHBoxLayout" name="menuLayout" stretch="0,0,0,0">
+          <item>
+           <widget class="QPushButton" name="fileButton">
+            <property name="text">
+             <string>File</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="settingButton">
+            <property name="text">
+             <string>setting</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="aboutButton">
+            <property name="text">
+             <string>about</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="menuSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
      <item>
       <widget class="QScrollArea" name="scrollArea">
        <property name="widgetResizable">
@@ -28,7 +72,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>-37</y>
           <width>1894</width>
           <height>905</height>
          </rect>
