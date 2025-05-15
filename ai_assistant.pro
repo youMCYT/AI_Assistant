@@ -9,15 +9,22 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    aboutdialog.cpp \
+    chatdialog.cpp \
     dsclient.cpp \
     main.cpp \
-    aiwidget.cpp
+    aiwidget.cpp \
+    settingdialog.cpp
 
 HEADERS += \
+    aboutdialog.h \
     aiwidget.h \
-    dsclient.h
+    chatdialog.h \
+    dsclient.h \
+    settingdialog.h
 
 FORMS += \
+    aboutdialog.ui \
     aiwidget.ui \
     chatdialog.ui \
     settingdialog.ui
@@ -28,3 +35,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES +=
+
+RESOURCES += \
+    resource.qrc
+
+RC_ICONS = "icon.ico"

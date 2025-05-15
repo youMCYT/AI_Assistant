@@ -13,26 +13,33 @@
 #include <QFile>
 #include <QDir>
 #include <QTimer>
+#include <QTextStream>
 
 class DeepSeekApiClient : public QObject
 {
     Q_OBJECT
 
 public:
-    DeepSeekApiClient(QObject *parent = nullptr);
+    explicit DeepSeekApiClient(QObject *parent = nullptr);
     bool tasksProcessGetter();
+
+    void setAPIKEY(const QString &key);
+    void setModel(const QString &type);
+
+    QString getAPIKEY();
+    QString getModel();
 
 signals:
     void sendReply(const QString &reply, bool is_error);
-    void findAPIKEY(bool is_APIKEY_empty, const QString &path);
     void runTasks(QJsonArray &dialogue);
     void taskFinished(QJsonArray &dialogue);
 
 private:
     QNetworkAccessManager *manager;
 
-    QString API_KEY_path;
     QString API_KEY;
+    QString model;
+
     const QString API_URL = "https://api.deepseek.com/chat/completions";
 
     QQueue<QString> messages;
@@ -40,11 +47,9 @@ private:
     bool is_task_running = false;
 
     void sendRequest(const QString &message, QJsonArray &dialogue);
-    void getAPIKEY(const QString &path);
 
 public slots:
     void getDialogue(const QString &message, QJsonArray &dialogue);
-    void sendAPIKEY();
 
 private slots:
     void handleRequest(QNetworkReply *reply, QJsonArray &dialogue);

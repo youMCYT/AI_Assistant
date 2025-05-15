@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>AIWidget</string>
+   <string>AI Assistant</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>icon.ico</normaloff>icon.ico</iconset>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
@@ -25,23 +29,23 @@
         <item>
          <layout class="QHBoxLayout" name="menuLayout" stretch="0,0,0,0">
           <item>
-           <widget class="QPushButton" name="fileButton">
+           <widget class="QPushButton" name="chatButton">
             <property name="text">
-             <string>File</string>
+             <string>Chat</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="settingButton">
             <property name="text">
-             <string>setting</string>
+             <string>Setting</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="aboutButton">
             <property name="text">
-             <string>about</string>
+             <string>About</string>
             </property>
            </widget>
           </item>
@@ -72,7 +76,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-37</y>
+          <y>0</y>
           <width>1894</width>
           <height>905</height>
          </rect>

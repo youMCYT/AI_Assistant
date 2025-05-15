@@ -7,11 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>305</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Setting</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>icon.ico</normaloff>icon.ico</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
@@ -44,12 +48,12 @@
             </property>
             <item>
              <property name="text">
-              <string>deepseek_v3</string>
+              <string>DeepSeek V3</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>deepseek_r1</string>
+              <string>DeepSeek R1</string>
              </property>
             </item>
            </widget>

@@ -3,9 +3,6 @@
 DeepSeekApiClient::DeepSeekApiClient(QObject *parent) : QObject(parent)
 {
     manager = new QNetworkAccessManager(this);
-    API_KEY_path = QDir::cleanPath(QDir::currentPath() + QDir::separator() + QString("setting.json"));
-
-    getAPIKEY(API_KEY_path);
 
     connect(this, &DeepSeekApiClient::runTasks, this, &DeepSeekApiClient::sendMultiRequest);
     connect(this, &DeepSeekApiClient::taskFinished, this, &DeepSeekApiClient::sendMultiRequest);
@@ -14,6 +11,26 @@ DeepSeekApiClient::DeepSeekApiClient(QObject *parent) : QObject(parent)
 bool DeepSeekApiClient::tasksProcessGetter()
 {
     return is_task_running;
+}
+
+void DeepSeekApiClient::setAPIKEY(const QString &key)
+{
+    API_KEY = key;
+}
+
+void DeepSeekApiClient::setModel(const QString &type)
+{
+    model = type;
+}
+
+QString DeepSeekApiClient::getAPIKEY()
+{
+    return API_KEY;
+}
+
+QString DeepSeekApiClient::getModel()
+{
+    return model;
 }
 
 void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue)
@@ -28,10 +45,18 @@ void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue
 
     dialogue.append(QJsonObject{{"role", "user"}, {"content", message}});
 
+    QJsonArray di = dialogue;
+
+    for(QJsonArray::Iterator it = di.begin(); it != di.end(); it++)
+    {
+        QJsonObject obj = it[0].toObject();
+        it[0] = QJsonObject{{"role", obj["role"]}, {"content", obj["content"]}};
+    }
+
     QJsonObject json
     {
-        {"model", "deepseek-chat"},
-        {"messages", dialogue}
+        {"model", model},
+        {"messages", di}
     };
 
     qDebug() << "requesting...";
@@ -45,31 +70,6 @@ void DeepSeekApiClient::sendRequest(const QString &message, QJsonArray &dialogue
     });
 }
 
-void DeepSeekApiClient::getAPIKEY(const QString &path)
-{
-    QFile file(path);
-
-    if (!QFile::exists(path))
-    {
-        file.open(QIODevice::WriteOnly);
-        file.write(QJsonDocument(QJsonObject{{"API_KEY", "将引号内的文字替换为你的DeepSeek API KEY"}}).toJson());
-        file.flush();
-        file.close();
-    }
-
-    file.open(QIODevice::ReadOnly);
-
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    file.close();
-
-    QJsonObject json = doc.object();
-
-    if (json["API_KEY"].toString() != "将引号内的文字替换为你的DeepSeek API KEY")
-    {
-        API_KEY = json["API_KEY"].toString();
-    }
-}
-
 void DeepSeekApiClient::getDialogue(const QString &message, QJsonArray &dialogue)
 {
     messages.enqueue(message);
@@ -77,11 +77,6 @@ void DeepSeekApiClient::getDialogue(const QString &message, QJsonArray &dialogue
     {
         emit runTasks(dialogue);
     }
-}
-
-void DeepSeekApiClient::sendAPIKEY()
-{
-    emit findAPIKEY(API_KEY.isEmpty(), API_KEY_path);
 }
 
 void DeepSeekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue)
@@ -102,10 +97,24 @@ void DeepSeekApiClient::handleRequest(QNetworkReply *reply, QJsonArray &dialogue
 
         if (doc["choices"].isArray())
         {
-            QString content = doc["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
-            qDebug() << content;
-            dialogue.append(QJsonObject{{"role", "assistant"}, {"content", content}});
-            emit sendReply(content, false);
+            if (model == "deepseek-chat")
+            {
+                QString content = doc["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
+                qDebug() << content;
+                dialogue.append(QJsonObject{{"role", "assistant"}, {"content", content}});
+                emit sendReply(content, false);
+            }
+            else
+            {
+                QString content = doc["choices"].toArray().first().toObject()["message"].toObject()["content"].toString();
+                QString reasoning_content = doc["choices"].toArray().first().toObject()["message"].toObject()["reasoning_content"].toString();
+                QString msg = reasoning_content;
+                msg.append("\n\n---\n\n");
+                msg.append(content);
+                qDebug() << msg;
+                dialogue.append(QJsonObject{{"role", "assistant"}, {"content", content}, {"reasoning_content", reasoning_content}});
+                emit sendReply(msg, false);
+            }
         }
         else
         {
